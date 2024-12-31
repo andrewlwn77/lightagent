@@ -5,6 +5,9 @@ from sqlmodel import SQLModel, Field, JSON, create_engine, Session, select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 import json
 from uuid import UUID, uuid4
+from .utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 class StoredStep(SQLModel, table=True):
     """Database model for steps."""
@@ -36,76 +39,101 @@ class TapeStore:
     """Handles tape storage and retrieval."""
     
     def __init__(self, database_url: str = "sqlite:///tapes.db"):
+        logger.debug(f"Initializing TapeStore with database: {database_url}")
         self.engine = create_engine(database_url)
         # Create tables
         SQLModel.metadata.create_all(self.engine)
+        logger.debug("Database tables created successfully")
 
     def save_tape(self, tape: 'Tape') -> UUID:
         """Save a tape and its steps."""
-        with Session(self.engine) as session:
-            # Create StoredTape
-            stored_tape = StoredTape(
-                id=UUID(tape.metadata.tape_id),
-                parent_id=UUID(tape.metadata.parent_id) if tape.metadata.parent_id else None,
-                author=tape.metadata.author,
-                created_at=datetime.fromisoformat(tape.metadata.created_at),
-            )
-            session.add(stored_tape)
-            
-            # Create StoredSteps
-            for i, step in enumerate(tape.steps):
-                stored_step = StoredStep(
-                    tape_id=stored_tape.id,
-                    type=step.type.value,
-                    content=json.loads(step.model_dump_json())['content'],
-                    agent=step.metadata.agent,
-                    node=step.metadata.node,
-                    timestamp=datetime.fromisoformat(step.metadata.timestamp),
-                    prompt_id=step.metadata.prompt_id,
-                    sequence=i
-                )
-                session.add(stored_step)
-            
-            session.commit()
-            return stored_tape.id
-
-    def load_tape(self, tape_id: UUID) -> 'Tape':
-        """Load a tape and its steps."""
-        from .tape import Tape, Step, StepMetadata, TapeMetadata, StepType
+        logger.debug(f"Saving tape {tape.metadata.tape_id} with {len(tape.steps)} steps")
         
         with Session(self.engine) as session:
-            # Load tape metadata
-            stored_tape = session.get(StoredTape, tape_id)
-            if not stored_tape:
-                raise ValueError(f"Tape {tape_id} not found")
-            
-            # Load steps
-            stmt = select(StoredStep).where(StoredStep.tape_id == tape_id).order_by(StoredStep.sequence)
-            stored_steps = session.exec(stmt).all()
-            
-            # Convert back to Tape model
-            steps = []
-            for stored_step in stored_steps:
-                step = Step(
-                    type=StepType(stored_step.type),
-                    content=stored_step.content,
-                    metadata=StepMetadata(
-                        agent=stored_step.agent,
-                        node=stored_step.node,
-                        timestamp=stored_step.timestamp.isoformat(),
-                        prompt_id=stored_step.prompt_id
-                    )
+            try:
+                # Create StoredTape
+                stored_tape = StoredTape(
+                    id=UUID(tape.metadata.tape_id),
+                    parent_id=UUID(tape.metadata.parent_id) if tape.metadata.parent_id else None,
+                    author=tape.metadata.author,
+                    created_at=datetime.fromisoformat(tape.metadata.created_at),
                 )
-                steps.append(step)
-            
-            metadata = TapeMetadata(
-                author=stored_tape.author,
-                parent_id=str(stored_tape.parent_id) if stored_tape.parent_id else None,
-                created_at=stored_tape.created_at.isoformat(),
-                tape_id=str(stored_tape.id)
-            )
-            
-            return Tape(steps=steps, metadata=metadata)
+                session.add(stored_tape)
+                logger.debug(f"Created StoredTape record for tape {stored_tape.id}")
+
+                # Save each step
+                for i, step in enumerate(tape.steps):
+                    stored_step = StoredStep(
+                        tape_id=stored_tape.id,
+                        type=step.type.value,
+                        content=json.loads(step.model_dump_json())['content'],
+                        agent=step.metadata.agent,
+                        node=step.metadata.node,
+                        timestamp=datetime.fromisoformat(step.metadata.timestamp),
+                        prompt_id=step.metadata.prompt_id,
+                        sequence=i
+                    )
+                    session.add(stored_step)
+                    logger.debug(f"Added step {i+1}/{len(tape.steps)} to tape {stored_tape.id}")
+
+                session.commit()
+                logger.debug(f"Successfully committed tape {stored_tape.id} to database")
+                return stored_tape.id
+            except Exception as e:
+                logger.error(f"Error saving tape: {str(e)}")
+                session.rollback()
+                raise
+
+    def load_tape(self, tape_id: UUID) -> 'Tape':
+        """Load a tape and its steps from storage."""
+        logger.debug(f"Loading tape {tape_id} from storage")
+        
+        with Session(self.engine) as session:
+            try:
+                # Load tape metadata
+                stored_tape = session.get(StoredTape, tape_id)
+                if not stored_tape:
+                    logger.error(f"Tape {tape_id} not found in storage")
+                    raise ValueError(f"No tape found with id {tape_id}")
+
+                logger.debug(f"Found tape {tape_id} in storage")
+                
+                # Load steps
+                stmt = select(StoredStep).where(StoredStep.tape_id == tape_id).order_by(StoredStep.sequence)
+                stored_steps = session.exec(stmt).all()
+                logger.debug(f"Loaded {len(stored_steps)} steps for tape {tape_id}")
+
+                # Convert back to Tape format
+                from .tape import Tape, Step, StepMetadata, TapeMetadata, StepType
+                
+                metadata = TapeMetadata(
+                    author=stored_tape.author,
+                    parent_id=str(stored_tape.parent_id) if stored_tape.parent_id else None,
+                    created_at=stored_tape.created_at.isoformat(),
+                    tape_id=str(stored_tape.id)
+                )
+                
+                tape_steps = []
+                for stored_step in stored_steps:
+                    step = Step(
+                        type=StepType(stored_step.type),
+                        content=stored_step.content,
+                        metadata=StepMetadata(
+                            agent=stored_step.agent,
+                            node=stored_step.node,
+                            timestamp=stored_step.timestamp.isoformat(),
+                            prompt_id=stored_step.prompt_id
+                        )
+                    )
+                    tape_steps.append(step)
+                    logger.debug(f"Processed step {stored_step.sequence} of type {stored_step.type}")
+
+                tape = Tape(steps=tape_steps, metadata=metadata)
+                logger.debug(f"Successfully reconstructed tape {tape_id}")
+                return tape
+            except Exception as e:
+                logger.error(f"Error loading tape {tape_id}: {str(e)}")
+                raise
 
     def get_tape_history(self, tape_id: UUID) -> List[UUID]:
         """Get the history of tapes leading to this one."""
@@ -168,7 +196,7 @@ def example_usage():
     store = TapeStore()
     
     # Create and save a tape
-    from .tape import Tape, Step, StepMetadata, StepType, TapeMetadata
+    from .tape import Tape, Step, StepMetadata, TapeMetadata, StepType
     
     tape = Tape(
         steps=[

@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from pydantic import BaseModel, TypeAdapter, ConfigDict, create_model
 from inspect import signature, Signature
 import inspect
+from .utils.logging import get_logger, log_execution
+
+logger = get_logger(__name__)
 
 # Previously defined tape classes
 from .tape import Tape, Step, StepMetadata, StepType
@@ -111,6 +114,7 @@ class Tool(Generic[AgentDeps]):
             return False
         return _is_run_context_type(first_param.annotation)
 
+    @log_execution
     async def execute(self, args: Dict[str, Any], context: RunContext[AgentDeps]) -> Any:
         """Execute the tool with validation."""
         try:
@@ -122,32 +126,17 @@ class Tool(Generic[AgentDeps]):
             call_args.extend([getattr(validated_args, key) for key in args.keys()])
             
             # Execute function
-            try:
-                if self.is_async:
-                    result = await self.function(*call_args)
-                else:
-                    result = self.function(*call_args)
-            except Exception as e:
-                # Record the failure in the tape
-                context.tape.append(Step(
-                    type=StepType.THOUGHT,
-                    content=f"Tool execution failed: {str(e)}. Retry {self.current_retry + 1}/{self.max_retries}",
-                    metadata=StepMetadata(
-                        agent="agent",
-                        node=self.name,
-                    )
-                ))
-                self.current_retry += 1
-                if self.current_retry <= self.max_retries:
-                    return await self.execute(args, context)
-                raise
-                
+            if self.is_async:
+                result = await self.function(*call_args)
+            else:
+                result = self.function(*call_args)
+            
             # Record the successful execution in the tape
             context.tape.append(Step(
                 type=StepType.ACTION,
                 content={"args": args, "result": result},
                 metadata=StepMetadata(
-                    agent="agent",  # This would be more specific in practice
+                    agent="agent",
                     node=self.name,
                 )
             ))
@@ -157,14 +146,19 @@ class Tool(Generic[AgentDeps]):
             return result
             
         except Exception as e:
-            # Handle validation errors
-            if self.current_retry == 0:  # Only record validation errors once
+            self.current_retry += 1
+            
+            # Only record the error if we're going to stop trying
+            if self.current_retry > self.max_retries:
                 context.tape.append(Step(
                     type=StepType.THOUGHT,
-                    content=f"Tool validation failed: {str(e)}",
+                    content=f"Tool execution failed: {str(e)}. Retry {self.current_retry}/{self.max_retries}",
                     metadata=StepMetadata(
                         agent="agent",
                         node=self.name,
                     )
                 ))
-            raise
+                raise
+            
+            # Try again if we haven't exceeded max retries
+            return await self.execute(args, context)
