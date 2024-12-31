@@ -4,14 +4,35 @@
 # Python executable (works on both Windows and Unix)
 PYTHON ?= python
 VENV = .venv
-BIN = $(VENV)/Scripts
+
 ifeq ($(OS),Windows_NT)
-    VENV_BIN = $(BIN)
-    # Windows needs different activation
-    ACTIVATE = $(VENV_BIN)/activate.bat
+    # Windows settings
+    VENV_BIN = $(VENV)\Scripts
+    PYTHON_CMD = $(VENV_BIN)\python.exe
+    PIP = $(VENV_BIN)\pip.exe
+    PYTEST = $(PYTHON_CMD) -m pytest
+    BLACK = $(PYTHON_CMD) -m black
+    ISORT = $(PYTHON_CMD) -m isort
+    MYPY = $(PYTHON_CMD) -m mypy
+    FLAKE8 = $(PYTHON_CMD) -m flake8
+    # Windows commands
+    RM = rd /s /q
+    RMDIR = if exist "$(1)" $(RM) "$(1)"
+    SEP = \\
 else
+    # Unix settings
     VENV_BIN = $(VENV)/bin
-    ACTIVATE = . $(VENV_BIN)/activate
+    PYTHON_CMD = $(VENV_BIN)/python
+    PIP = $(VENV_BIN)/pip
+    PYTEST = $(VENV_BIN)/pytest
+    BLACK = $(VENV_BIN)/black
+    ISORT = $(VENV_BIN)/isort
+    MYPY = $(VENV_BIN)/mypy
+    FLAKE8 = $(VENV_BIN)/flake8
+    # Unix commands
+    RM = rm -rf
+    RMDIR = $(RM) $(1)
+    SEP = /
 endif
 
 help:
@@ -25,34 +46,34 @@ help:
 
 $(VENV)/pyvenv.cfg:
 	$(PYTHON) -m venv $(VENV)
-	$(VENV_BIN)/python -m pip install --upgrade pip
+	$(PYTHON_CMD) -m pip install --upgrade pip
 
 install: $(VENV)/pyvenv.cfg
-	$(VENV_BIN)/pip install -e .
+	$(PIP) install -e .
 
 dev: install
-	$(VENV_BIN)/pip install -e ".[dev]"
+	$(PIP) install -e ".[dev]"
 
 clean:
-	rm -rf build/
-	rm -rf dist/
-	rm -rf *.egg-info
-	rm -rf **/__pycache__
-	rm -rf .pytest_cache
-	rm -rf .coverage
-	rm -rf htmlcov
-	rm -rf .mypy_cache
+	$(call RMDIR,build)
+	$(call RMDIR,dist)
+	$(call RMDIR,*.egg-info)
+	$(call RMDIR,**/__pycache__)
+	$(call RMDIR,.pytest_cache)
+	$(call RMDIR,.coverage)
+	$(call RMDIR,htmlcov)
+	$(call RMDIR,.mypy_cache)
 
 test:
-	$(VENV_BIN)/pytest tests/ --cov=lightagent --cov-report=term-missing
+	$(PYTEST) tests/ --cov=lightagent --cov-report=term-missing
 
 format:
-	$(VENV_BIN)/black src/ tests/
-	$(VENV_BIN)/isort src/ tests/
+	$(BLACK) src/ tests/
+	$(ISORT) src/ tests/
 
 lint:
-	$(VENV_BIN)/mypy src/
-	$(VENV_BIN)/black --check src/ tests/
-	$(VENV_BIN)/flake8 src/ tests/
+	$(MYPY) src/
+	$(BLACK) --check src/ tests/
+	$(FLAKE8) src/ tests/
 
 all: clean install format lint test

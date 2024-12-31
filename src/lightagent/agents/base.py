@@ -1,5 +1,7 @@
+# src/lightagent/agents/base.py
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
+
 from ..tape import Tape, Step
 from ..models.steps import StepType, StepStatus, StepResult
 

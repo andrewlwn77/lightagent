@@ -1,6 +1,9 @@
-from typing import Dict, Any, Optional
+# src/lightagent/agents/simple.py
+from typing import Dict, Any
+
+from ..models.steps import StepResult, StepType, StepStatus
+from ..tape import Step, StepMetadata
 from .base import BaseAgent
-from ..models.steps import StepResult, StepType
 
 class SimpleAgent(BaseAgent):
     """A simple agent implementation."""
