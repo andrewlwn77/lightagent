@@ -1,0 +1,32 @@
+# requirements-dev.txt
+
+-r requirements.txt
+
+# Testing extras
+pytest-xdist>=3.3.0      # Parallel testing
+pytest-sugar>=0.9.7      # Better test progress display
+pytest-watch>=4.2.0      # Auto-run tests
+pytest-bdd>=6.1.1        # Behavior-driven development
+
+# Development extras
+ipython>=8.12.0          # Better REPL
+ipdb>=0.13.0            # Better debugger
+jupyter>=1.0.0          # Notebook support
+notebook>=7.0.0         # Notebook interface
+
+# Code Quality
+bandit>=1.7.5           # Security checks
+safety>=2.3.0           # Dependency security checks
+pylint>=2.17.0          # Additional linting
+pytype>=2023.5.24       # Additional type checking
+
+# Development Tools
+pip-tools>=7.1.0        # Requirements management
+tox>=4.6.0              # Test automation
+bump2version>=1.0.1     # Version management
+
+# Documentation extras
+mkdocs-awesome-pages-plugin>=2.8.0
+mkdocs-minify-plugin>=0.6.4
+mkdocs-git-revision-date-plugin>=0.3.2
+mkdocs-jupyter>=0.24.1
