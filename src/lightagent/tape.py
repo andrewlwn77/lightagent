@@ -1,19 +1,20 @@
+# src/lightagent/tape.py
 from enum import Enum
 from typing import List, Optional, Any
 from datetime import datetime
 import uuid
 from pydantic import BaseModel, Field
+from .models.base import BaseMetadata
 
 class StepType(str, Enum):
     THOUGHT = "thought"
     ACTION = "action"
     OBSERVATION = "observation"
 
-class StepMetadata(BaseModel):
+class StepMetadata(BaseMetadata):
     """Metadata for a step in the tape."""
     agent: str = Field(description="Hierarchical name of the agent that generated the step")
     node: str = Field(description="Name of the node that generated the step")
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
     prompt_id: Optional[str] = Field(default=None, description="ID linking to the prompt that generated this step")
 
 class Step(BaseModel):

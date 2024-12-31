@@ -1,7 +1,7 @@
-# tools.py
-from typing import Any, Callable, Dict, Generic, Optional, TypeVar, Union, ParamSpec, Awaitable, get_type_hints
+# src/lightagent/tools.py
+from typing import Any, Callable, Dict, Generic, Optional, TypeVar, Union, ParamSpec, Awaitable, get_type_hints, get_origin, get_args
 from dataclasses import dataclass
-from pydantic import BaseModel, TypeAdapter, ConfigDict
+from pydantic import BaseModel, TypeAdapter, ConfigDict, create_model
 from inspect import signature, Signature
 import inspect
 
@@ -44,32 +44,35 @@ def function_schema(function: Callable[..., Any], takes_ctx: bool) -> Dict[str, 
     # Skip the first parameter if it's context
     start_idx = 1 if takes_ctx else 0
     
-    # Process each parameter
+    # Process each parameter and create field definitions
+    fields = {}
     for name, param in list(sig.parameters.items())[start_idx:]:
         if param.annotation == sig.empty:
-            # Default to Any if no annotation
-            schema = {"type": "object"}
+            fields[name] = (Any, ... if param.default == param.empty else param.default)
         else:
-            # Get annotation from type hints
-            annotation = type_hints[name]
-            adapter = TypeAdapter(annotation)
-            schema = adapter.json_schema()
-        
-        properties[name] = schema
-        if param.default == param.empty:
-            required.append(name)
+            fields[name] = (param.annotation, ... if param.default == param.empty else param.default)
+
+    # Create a dynamic model for validation
+    model = create_model('ToolParameters', **fields)
+    schema = model.model_json_schema()
     
-    parameters_json_schema = {
-        "type": "object",
-        "properties": properties,
-        "required": required
+    return {
+        "parameters_json_schema": schema,
+        "description": function.__doc__ or "",
+        "name": function.__name__,
+        "model": model
     }
 
-    return {
-        "parameters_json_schema": parameters_json_schema,
-        "description": function.__doc__ or "",
-        "name": function.__name__
-    }
+def _is_run_context_type(type_hint: Any) -> bool:
+    """Check if a type hint is a RunContext or a subclass of RunContext."""
+    if type_hint == RunContext:
+        return True
+    origin = get_origin(type_hint)
+    if origin is None:
+        return False
+    if origin == RunContext:
+        return True
+    return False
 
 class Tool(Generic[AgentDeps]):
     """A tool function for an agent."""
@@ -93,10 +96,7 @@ class Tool(Generic[AgentDeps]):
         self.parameters_json_schema = schema["parameters_json_schema"]
         
         # Set up validation
-        self.validator = TypeAdapter(
-            schema["parameters_json_schema"],
-            config=ConfigDict(arbitrary_types_allowed=True)
-        )
+        self.validator = schema["model"]
         
         self.is_async = inspect.iscoroutinefunction(function)
         self.current_retry = 0
@@ -107,25 +107,42 @@ class Tool(Generic[AgentDeps]):
         if not sig.parameters:
             return False
         first_param = next(iter(sig.parameters.values()))
-        return first_param.annotation != sig.empty and issubclass(first_param.annotation, RunContext)
+        if first_param.annotation == sig.empty:
+            return False
+        return _is_run_context_type(first_param.annotation)
 
     async def execute(self, args: Dict[str, Any], context: RunContext[AgentDeps]) -> Any:
         """Execute the tool with validation."""
         try:
             # Validate arguments
-            validated_args = self.validator.validate_python(args)
+            validated_args = self.validator(**args)
             
             # Prepare arguments
             call_args = [context] if self.takes_ctx else []
-            call_args.extend(validated_args.values())
+            call_args.extend([getattr(validated_args, key) for key in args.keys()])
             
             # Execute function
-            if self.is_async:
-                result = await self.function(*call_args)
-            else:
-                result = self.function(*call_args)
-            
-            # Record the execution in the tape
+            try:
+                if self.is_async:
+                    result = await self.function(*call_args)
+                else:
+                    result = self.function(*call_args)
+            except Exception as e:
+                # Record the failure in the tape
+                context.tape.append(Step(
+                    type=StepType.THOUGHT,
+                    content=f"Tool execution failed: {str(e)}. Retry {self.current_retry + 1}/{self.max_retries}",
+                    metadata=StepMetadata(
+                        agent="agent",
+                        node=self.name,
+                    )
+                ))
+                self.current_retry += 1
+                if self.current_retry <= self.max_retries:
+                    return await self.execute(args, context)
+                raise
+                
+            # Record the successful execution in the tape
             context.tape.append(Step(
                 type=StepType.ACTION,
                 content={"args": args, "result": result},
@@ -135,50 +152,19 @@ class Tool(Generic[AgentDeps]):
                 )
             ))
             
+            # Reset retry counter on success
+            self.current_retry = 0
             return result
             
         except Exception as e:
-            self.current_retry += 1
-            if self.current_retry > self.max_retries:
-                raise
-            
-            # Record the failure in the tape
-            context.tape.append(Step(
-                type=StepType.THOUGHT,
-                content=f"Tool execution failed: {str(e)}. Retry {self.current_retry}/{self.max_retries}",
-                metadata=StepMetadata(
-                    agent="agent",
-                    node=self.name,
-                )
-            ))
-            
-            # Re-raise to allow retry logic
+            # Handle validation errors
+            if self.current_retry == 0:  # Only record validation errors once
+                context.tape.append(Step(
+                    type=StepType.THOUGHT,
+                    content=f"Tool validation failed: {str(e)}",
+                    metadata=StepMetadata(
+                        agent="agent",
+                        node=self.name,
+                    )
+                ))
             raise
-
-# Example usage
-
-async def example_search_tool(ctx: RunContext[str], query: str) -> Dict[str, Any]:
-    """Search tool example."""
-    # Simulate search
-    return {"results": [f"Result for {query}"]}
-
-def create_example():
-    # Create tool
-    tool = Tool(example_search_tool)
-    
-    # Create context with tape
-    context = RunContext(
-        deps="example_dep",
-        usage=0,
-        prompt="Search for something",
-        tape=Tape()
-    )
-    
-    # Tool definition for LLM
-    tool_def = ToolDefinition(
-        name=tool.name,
-        description=tool.description,
-        parameters_json_schema=tool.parameters_json_schema
-    )
-    
-    return tool, context, tool_def
