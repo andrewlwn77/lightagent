@@ -1,7 +1,7 @@
 # Lightweight Agent Framework
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andrewlwn77/robotape/refs/heads/main/docs/robotape.jpg" alt="Lightweight Agent Framework Logo" width="400"/>
+  <img src="https://raw.githubusercontent.com/andrewlwn77/robotape/refs/heads/main/docs/lightagent.jpg" alt="Lightweight Agent Framework Logo" width="400"/>
 </p>
 
 
