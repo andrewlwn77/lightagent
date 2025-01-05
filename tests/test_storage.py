@@ -1,7 +1,7 @@
 import pytest
 from uuid import UUID
-from lightagent.storage import TapeStore
-from lightagent.tape import Tape, Step, StepMetadata, StepType
+from robotape.storage import TapeStore
+from robotape.tape import Tape, Step, StepMetadata, StepType
 
 def test_save_and_load_tape(test_db, sample_tape):
     """Test saving and loading a tape."""

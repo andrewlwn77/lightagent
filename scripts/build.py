@@ -58,7 +58,7 @@ def run_tests(python):
     run_cmd([
         str(python), "-m", "pytest",
         "tests/",
-        "--cov=lightagent",
+        "--cov=robotape",
         "--cov-report=term-missing"
     ])
 
@@ -77,7 +77,7 @@ def main():
     """Main build script."""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Build script for lightagent")
+    parser = argparse.ArgumentParser(description="Build script for robotape")
     parser.add_argument("command", choices=[
         "install", "dev", "clean", "test",
         "format", "lint", "all"

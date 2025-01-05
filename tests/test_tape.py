@@ -1,5 +1,5 @@
 import pytest
-from lightagent.tape import Tape, Step, StepMetadata, StepType
+from robotape.tape import Tape, Step, StepMetadata, StepType
 from uuid import UUID
 
 def test_tape_creation():

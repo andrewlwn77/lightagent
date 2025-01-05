@@ -162,3 +162,4 @@ cython_debug/
 
 test.db
 codebase.md
+poetry.lock

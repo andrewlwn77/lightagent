@@ -1,4 +1,4 @@
-"""Logging utilities for the lightagent framework."""
+"""Logging utilities for the robotape framework."""
 import logging
 import inspect
 from functools import wraps

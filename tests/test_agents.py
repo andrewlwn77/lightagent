@@ -1,8 +1,8 @@
 import pytest
-from lightagent.agents.simple import SimpleAgent
-from lightagent.models.steps import StepType, StepStatus, StepResult
-from lightagent.tape import Step, StepMetadata
-from lightagent.tape import Step, Tape
+from robotape.agents.simple import SimpleAgent
+from robotape.models.steps import StepType, StepStatus, StepResult
+from robotape.tape import Step, StepMetadata
+from robotape.tape import Step, Tape
 
 @pytest.mark.asyncio
 async def test_agent_think(simple_agent):

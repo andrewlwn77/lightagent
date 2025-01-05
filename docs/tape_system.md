@@ -16,7 +16,7 @@ A tape is a sequential record of steps that captures an agent's:
 The `Tape` class is the primary container for steps:
 
 ```python
-from lightagent.tape import Tape, TapeMetadata
+from robotape.tape import Tape, TapeMetadata
 
 tape = Tape(
     metadata=TapeMetadata(
@@ -31,7 +31,7 @@ tape = Tape(
 Steps are individual records within a tape:
 
 ```python
-from lightagent.tape import Step, StepMetadata, StepType
+from robotape.tape import Step, StepMetadata, StepType
 
 step = Step(
     type=StepType.THOUGHT,
@@ -118,7 +118,7 @@ print(new_tape.metadata.parent_id)  # Shows original tape's ID
 The framework includes a built-in storage system:
 
 ```python
-from lightagent.storage import TapeStore
+from robotape.storage import TapeStore
 
 # Initialize storage
 store = TapeStore("sqlite:///tapes.db")
@@ -170,7 +170,7 @@ Extend the system with custom step types:
 
 ```python
 from enum import Enum
-from lightagent.tape import Step
+from robotape.tape import Step
 
 class CustomStepType(str, Enum):
     ANALYSIS = "analysis"

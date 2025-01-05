@@ -1,15 +1,16 @@
 import pytest
 import asyncio
 from sqlmodel import SQLModel
-from typing import AsyncGenerator, Generator
-from lightagent.storage import TapeStore
-from lightagent.tape import Tape, Step, StepMetadata, StepType
-from lightagent.agents.simple import SimpleAgent
+from typing import Generator
+from robotape.storage import TapeStore
+from robotape.tape import Tape, Step, StepMetadata, StepType
+from robotape.agents.simple import SimpleAgent
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
+@pytest.fixture(scope="function")
+async def event_loop():
     """Create an instance of the default event loop for each test case."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
+    asyncio.set_event_loop(loop)
     yield loop
     loop.close()
 
@@ -46,7 +47,6 @@ def sample_tape():
     return tape
 
 @pytest.fixture
-async def simple_agent() -> AsyncGenerator[SimpleAgent, None]:
+def simple_agent(event_loop):
     """Create a simple agent for testing."""
-    agent = SimpleAgent("test_agent")
-    yield agent
+    return SimpleAgent("test_agent")

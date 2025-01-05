@@ -137,7 +137,7 @@ pip install -e ".[dev]"
 
 2. Run tests:
 ```bash
-pytest tests/ --cov=lightagent
+pytest tests/ --cov=robotape
 ```
 
 3. Format code:
@@ -151,8 +151,8 @@ isort src/ tests/
 Basic agent implementation:
 
 ```python
-from lightagent.agents import SimpleAgent
-from lightagent.tape import Tape
+from robotape.agents import SimpleAgent
+from robotape.tape import Tape
 
 # Create agent and tape
 agent = SimpleAgent("my_agent")
@@ -237,7 +237,7 @@ class CustomAgent(BaseAgent):
 ### Creating Custom Tools
 
 ```python
-from lightagent.tools import Tool
+from robotape.tools import Tool
 
 async def custom_tool(ctx, param1: str, param2: int = 10):
     """Custom tool implementation."""

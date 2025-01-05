@@ -1,7 +1,7 @@
 # Lightweight Agent Framework
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andrewlwn77/lightagent/refs/heads/main/docs/lightagent.jpg" alt="Lightweight Agent Framework Logo" width="400"/>
+  <img src="https://raw.githubusercontent.com/andrewlwn77/robotape/refs/heads/main/docs/robotape.jpg" alt="Lightweight Agent Framework Logo" width="400"/>
 </p>
 
 
@@ -29,13 +29,13 @@ Lightweight Agent Framework (LAF) provides a simple yet powerful foundation for 
 ## Quick Installation
 
 ```bash
-pip install lightagent
+pip install robotape
 ```
 
 For development installation:
 
 ```bash
-pip install lightagent[dev]
+pip install robotape[dev]
 ```
 
 ## Basic Usage
@@ -43,8 +43,8 @@ pip install lightagent[dev]
 Here's a simple example of creating and running an agent:
 
 ```python
-from lightagent.agents import SimpleAgent
-from lightagent.tape import Tape, StepType
+from robotape.agents import SimpleAgent
+from robotape.tape import Tape, StepType
 
 # Create an agent and a tape
 agent = SimpleAgent("my_agent")
@@ -82,15 +82,15 @@ For detailed information, check out:
 Clone and set up the development environment:
 
 ```bash
-git clone https://github.com/yourusername/lightagent.git
-cd lightagent
+git clone https://github.com/yourusername/robotape.git
+cd robotape
 pip install -e ".[dev]"
 ```
 
 Run tests:
 
 ```bash
-pytest tests/ --cov=lightagent
+pytest tests/ --cov=robotape
 ```
 
 ## Contributing

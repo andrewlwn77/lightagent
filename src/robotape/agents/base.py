@@ -1,4 +1,4 @@
-# src/lightagent/agents/base.py
+# src/robotape/agents/base.py
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 

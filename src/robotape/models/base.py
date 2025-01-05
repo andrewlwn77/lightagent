@@ -1,4 +1,4 @@
-# src/lightagent/models/base.py
+# src/robotape/models/base.py
 from pydantic import BaseModel, Field
 from typing import Optional, Any, Dict
 from datetime import datetime

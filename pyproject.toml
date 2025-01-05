@@ -1,50 +1,45 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
-name = "lightagent"
+[tool.poetry]
+name = "robotape"
 version = "0.1.0"
 description = "A lightweight agent framework"
-authors = [
-    { name = "Your Name", email = "your.email@example.com" },
-]
+authors = ["Andrew Lewin"]
 readme = "README.md"
-requires-python = ">=3.9"
-dependencies = [
-    "pydantic>=2.0.0",
-    "sqlmodel>=0.0.8",
-    "sqlalchemy>=2.0.0",
-    "python-dotenv>=1.0.0",
-]
+packages = [{include = "robotape", from = "src"}]
+license = "MIT"
+repository = "https://github.com/andrewlwn77/robotape"
+documentation = "https://github.com/andrewlwn77/robotape/tree/main/docs"
+keywords = ["agent", "framework", "autonomous", "AI"]
 
-[project.optional-dependencies]
-dev = [
-    # Core Testing
-    "pytest>=8.0.0",
-    "pytest-cov>=4.1.0",
-    "pytest-asyncio>=0.23.5",
-    "pytest-mock>=3.12.0",
-    # Testing Enhancements
-    "pytest-xdist>=3.3.0",
-    "pytest-sugar>=0.9.7",
-    # Code Quality
-    "black>=24.1.1",
-    "isort>=5.13.2",
-    "mypy>=1.8.0",
-    "flake8>=7.0.0",
-]
+[tool.poetry.dependencies]
+python = ">=3.9"
+pydantic = ">=2.0.0"
+sqlmodel = ">=0.0.8"
+sqlalchemy = ">=2.0.0"
+python-dotenv = ">=1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.0.0"
+pytest-cov = ">=4.1.0"
+pytest-asyncio = ">=0.23.5"
+pytest-mock = ">=3.12.0"
+pytest-xdist = ">=3.3.0"
+pytest-sugar = ">=0.9.7"
+black = ">=24.1.1"
+isort = ">=5.13.2"
+mypy = ">=1.8.0"
+flake8 = ">=7.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-ra -q"
-testpaths = [
-    "tests",
-]
-pythonpath = [
-    "src"
-]
+testpaths = ["tests"]
+pythonpath = ["src"]
 asyncio_mode = "auto"
+asyncio_fixture_loop_scope = "function"
 
 [tool.black]
 line-length = 100

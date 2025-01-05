@@ -9,7 +9,7 @@ This guide will help you get up and running with the Lightweight Agent Framework
 For basic usage, install using pip:
 
 ```bash
-pip install lightagent
+pip install robotape
 ```
 
 ### Development Installation
@@ -17,7 +17,7 @@ pip install lightagent
 For development or to access additional tools:
 
 ```bash
-pip install lightagent[dev]
+pip install robotape[dev]
 ```
 
 ## Core Concepts
@@ -34,8 +34,8 @@ Before diving into code, let's understand the key concepts:
 Let's create a simple agent that processes some text:
 
 ```python
-from lightagent.agents import SimpleAgent
-from lightagent.tape import Tape, Step, StepMetadata, StepType
+from robotape.agents import SimpleAgent
+from robotape.tape import Tape, Step, StepMetadata, StepType
 
 # Create an agent
 agent = SimpleAgent("text_processor")
@@ -69,8 +69,8 @@ asyncio.run(process_text())
 Extend the `BaseAgent` class to create your own agent:
 
 ```python
-from lightagent.agents import BaseAgent
-from lightagent.models.steps import StepResult
+from robotape.agents import BaseAgent
+from robotape.models.steps import StepResult
 
 class MyCustomAgent(BaseAgent):
     async def think(self, context):
@@ -100,7 +100,7 @@ class MyCustomAgent(BaseAgent):
 Tools extend an agent's capabilities:
 
 ```python
-from lightagent.tools import Tool, RunContext
+from robotape.tools import Tool, RunContext
 
 # Define a tool function
 async def search_tool(ctx: RunContext[str], query: str):
@@ -129,7 +129,7 @@ result = await tool.execute(
 Tapes record agent execution history:
 
 ```python
-from lightagent.tape import Tape
+from robotape.tape import Tape
 
 # Create a tape
 tape = Tape()
@@ -153,7 +153,7 @@ new_tape = tape.clone()
 Use the built-in storage system:
 
 ```python
-from lightagent.storage import TapeStore
+from robotape.storage import TapeStore
 
 # Initialize storage
 store = TapeStore("sqlite:///agents.db")

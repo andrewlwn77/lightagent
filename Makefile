@@ -1,5 +1,5 @@
 # Makefile
-.PHONY: help install dev clean test format lint all
+.PHONY: help install dev clean test format lint publish-test publish all
 
 # Python executable (works on both Windows and Unix)
 PYTHON ?= python
@@ -9,16 +9,16 @@ ifeq ($(OS),Windows_NT)
     # Windows settings
     VENV_BIN = $(VENV)\Scripts
     PYTHON_CMD = $(VENV_BIN)\python.exe
-    PIP = $(VENV_BIN)\pip.exe
+    PIP = $(PYTHON_CMD) -m pip
     PYTEST = $(PYTHON_CMD) -m pytest
     BLACK = $(PYTHON_CMD) -m black
     ISORT = $(PYTHON_CMD) -m isort
     MYPY = $(PYTHON_CMD) -m mypy
     FLAKE8 = $(PYTHON_CMD) -m flake8
-    # Windows commands
-    RM = rd /s /q
-    RMDIR = if exist "$(1)" $(RM) "$(1)"
-    SEP = \\
+    # Windows commands with proper error handling
+    define RMDIR
+        if exist "$(1)" (del /s /q "$(1)" 2>nul & rd /s /q "$(1)" 2>nul || exit 0)
+    endef
 else
     # Unix settings
     VENV_BIN = $(VENV)/bin
@@ -30,9 +30,7 @@ else
     MYPY = $(VENV_BIN)/mypy
     FLAKE8 = $(VENV_BIN)/flake8
     # Unix commands
-    RM = rm -rf
-    RMDIR = $(RM) $(1)
-    SEP = /
+    RMDIR = rm -rf
 endif
 
 help:
@@ -42,30 +40,36 @@ help:
 	@echo "make test       - Run tests"
 	@echo "make format     - Format code"
 	@echo "make lint       - Run linters"
+	@echo "make publish-test - Build and publish to TestPyPI"
+	@echo "make publish    - Build and publish to PyPI"
 	@echo "make all        - Run clean install format lint test"
 
 $(VENV)/pyvenv.cfg:
 	$(PYTHON) -m venv $(VENV)
-	$(PYTHON_CMD) -m pip install --upgrade pip
+	$(PIP) install --upgrade pip
 
 install: $(VENV)/pyvenv.cfg
-	$(PIP) install -e .
+	$(PIP) install -r requirements.txt
 
 dev: install
-	$(PIP) install -e ".[dev]"
+	$(PIP) install -r requirements-dev.txt
+	$(PIP) install -e .
 
 clean:
 	$(call RMDIR,build)
 	$(call RMDIR,dist)
 	$(call RMDIR,*.egg-info)
-	$(call RMDIR,**/__pycache__)
+	$(call RMDIR,__pycache__)
+	$(call RMDIR,src\robotape\__pycache__)
+	$(call RMDIR,src\robotape\*\__pycache__)
+	$(call RMDIR,tests\__pycache__)
 	$(call RMDIR,.pytest_cache)
 	$(call RMDIR,.coverage)
 	$(call RMDIR,htmlcov)
 	$(call RMDIR,.mypy_cache)
 
-test:
-	$(PYTEST) tests/ --cov=lightagent --cov-report=term-missing
+test: dev
+	$(PYTEST) tests/ --cov=robotape --cov-report=term-missing
 
 format:
 	$(BLACK) src/ tests/
@@ -75,5 +79,39 @@ lint:
 	$(MYPY) src/
 	$(BLACK) --check src/ tests/
 	$(FLAKE8) src/ tests/
+
+install-poetry:
+	$(PIP) install poetry
+
+build: clean install-poetry
+	$(PYTHON_CMD) -m poetry build
+
+publish-test: build
+ifeq ($(OS),Windows_NT)
+	@echo "Please set POETRY_PYPI_TOKEN_TESTPYPI environment variable to your TestPyPI token"
+	$(PYTHON_CMD) -m poetry config repositories.testpypi https://test.pypi.org/legacy/
+	$(PYTHON_CMD) -m poetry publish -r testpypi
+else
+	@if [ -z "$(POETRY_PYPI_TOKEN_TESTPYPI)" ]; then \
+		echo "Error: POETRY_PYPI_TOKEN_TESTPYPI is not set"; \
+		echo "Please set it with: export POETRY_PYPI_TOKEN_TESTPYPI=your_token"; \
+		exit 1; \
+	fi
+	$(PYTHON_CMD) -m poetry config repositories.testpypi https://test.pypi.org/legacy/
+	$(PYTHON_CMD) -m poetry publish -r testpypi
+endif
+
+publish: build
+ifeq ($(OS),Windows_NT)
+	@echo "Please set POETRY_PYPI_TOKEN_PYPI environment variable to your PyPI token"
+	$(PYTHON_CMD) -m poetry publish
+else
+	@if [ -z "$(POETRY_PYPI_TOKEN_PYPI)" ]; then \
+		echo "Error: POETRY_PYPI_TOKEN_PYPI is not set"; \
+		echo "Please set it with: export POETRY_PYPI_TOKEN_PYPI=your_token"; \
+		exit 1; \
+	fi
+	$(PYTHON_CMD) -m poetry publish
+endif
 
 all: clean install format lint test

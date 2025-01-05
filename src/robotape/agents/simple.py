@@ -1,4 +1,4 @@
-# src/lightagent/agents/simple.py
+# src/robotape/agents/simple.py
 from typing import Dict, Any
 
 from ..models.steps import StepResult, StepType, StepStatus

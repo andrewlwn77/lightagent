@@ -15,8 +15,8 @@ Agents in the framework follow a three-phase execution cycle:
 All agents inherit from the `BaseAgent` class:
 
 ```python
-from lightagent.agents import BaseAgent
-from lightagent.models.steps import StepResult
+from robotape.agents import BaseAgent
+from robotape.models.steps import StepResult
 
 class BaseAgent(ABC):
     async def think(self, context: Dict[str, Any]) -> StepResult:
@@ -39,7 +39,7 @@ class BaseAgent(ABC):
 The framework includes a `SimpleAgent` implementation:
 
 ```python
-from lightagent.agents import SimpleAgent
+from robotape.agents import SimpleAgent
 
 agent = SimpleAgent("my_agent")
 ```
@@ -55,8 +55,8 @@ Key features:
 ### Basic Custom Agent
 
 ```python
-from lightagent.agents import BaseAgent
-from lightagent.models.steps import StepResult
+from robotape.agents import BaseAgent
+from robotape.models.steps import StepResult
 
 class MyCustomAgent(BaseAgent):
     async def think(self, context):
@@ -87,8 +87,8 @@ class MyCustomAgent(BaseAgent):
 ### Agent with Tools
 
 ```python
-from lightagent.agents import BaseAgent
-from lightagent.tools import Tool, RunContext
+from robotape.agents import BaseAgent
+from robotape.tools import Tool, RunContext
 
 class ToolEnabledAgent(BaseAgent):
     def __init__(self, name: str):
@@ -249,7 +249,7 @@ class StatefulAgent(BaseAgent):
 ## Debugging Agents
 
 ```python
-from lightagent.utils.logging import setup_logging
+from robotape.utils.logging import setup_logging
 
 # Enable debug logging
 setup_logging(debug=True)

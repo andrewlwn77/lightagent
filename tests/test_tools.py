@@ -2,8 +2,8 @@
 import pytest
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
-from lightagent.tools import Tool, RunContext
-from lightagent.tape import Tape, Step, StepMetadata, StepType
+from robotape.tools import Tool, RunContext
+from robotape.tape import Tape, Step, StepMetadata, StepType
 
 # Test models for tool validation
 class SearchParams(BaseModel):
