@@ -82,7 +82,7 @@ For detailed information, check out:
 Clone and set up the development environment:
 
 ```bash
-git clone https://github.com/yourusername/robotape.git
+git clone https://github.com/andrewlwn77/robotape.git
 cd robotape
 pip install -e ".[dev]"
 ```
