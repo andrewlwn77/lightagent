@@ -1,5 +1,10 @@
 # Lightweight Agent Framework
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/andrewlwn77/lightagent/refs/heads/main/docs/lightagent.jpg" alt="Lightweight Agent Framework Logo" width="400"/>
+</p>
+
+
 A minimalist, extensible framework for building autonomous agents with a focus on transparency and composability.
 
 ## Overview
