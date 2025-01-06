@@ -6,13 +6,13 @@ from robotape.storage import TapeStore
 from robotape.tape import Tape, Step, StepMetadata, StepType
 from robotape.agents.simple import SimpleAgent
 
-@pytest.fixture(scope="function")
-async def event_loop():
-    """Create an instance of the default event loop for each test case."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
+# @pytest.fixture(scope="function")
+# async def event_loop():
+#     """Create an instance of the default event loop for each test case."""
+#     loop = asyncio.get_event_loop_policy().new_event_loop()
+#     asyncio.set_event_loop(loop)
+#     yield loop
+#     loop.close()
 
 @pytest.fixture
 def test_db():

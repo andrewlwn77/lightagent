@@ -7,26 +7,13 @@ asyncio>=3.4.3           # Async support
 aiohttp>=3.8.0           # Async HTTP client
 typing-extensions>=4.5.0  # Additional typing support
 uuid>=1.30               # UUID generation
+mirascope>=1.14.0        # Mirascope integration
+mirascope[anthropic]
 
-# Testing
-pytest>=7.0.0
-pytest-cov>=4.1.0        # Coverage reporting
-pytest-asyncio>=0.21.0   # Async test support
-coverage>=7.2.0
-pytest-mock>=3.10.0      # Mocking support
-
-# Development
-black>=23.0.0            # Code formatting
-isort>=5.12.0           # Import sorting
-mypy>=1.0.0             # Type checking
-flake8>=6.0.0           # Linting
-autopep8>=2.0.0         # Code formatting
-pre-commit>=3.3.0       # Git hooks
-
-# Documentation
-mkdocs>=1.4.0           # Documentation generation
-mkdocs-material>=9.1.0  # Documentation theme
-mkdocstrings>=0.22.0    # Python API documentation
+# LLM Provider Dependencies
+openai>=1.59.3           # OpenAI API
+anthropic>=0.42.0        # Anthropic API
+huggingface-hub>=0.27.0  # HuggingFace API
 
 # Optional Dependencies - uncomment as needed
 

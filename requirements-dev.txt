@@ -13,3 +13,10 @@ black>=24.1.1          # Code formatting
 isort>=5.13.2          # Import sorting
 mypy>=1.8.0            # Type checking
 flake8>=7.0.0          # Linting
+autopep8>=2.0.0         # Code formatting
+pre-commit>=3.3.0       # Git hooks
+
+# Documentation
+# mkdocs>=1.4.0           # Documentation generation
+# mkdocs-material>=9.1.0  # Documentation theme
+# mkdocstrings>=0.22.0    # Python API documentation

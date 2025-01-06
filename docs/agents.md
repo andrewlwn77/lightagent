@@ -50,6 +50,86 @@ Key features:
 - Tape integration
 - Tool support
 
+### LLM-Aware Agents
+
+The framework provides built-in support for LLM (Large Language Model) agents, which can interact with various LLM providers such as OpenAI, Anthropic, and HuggingFace. These agents are designed to integrate seamlessly with the LLM capabilities provided by the framework.
+
+#### LLMAwareAgent
+
+The `LLMAwareAgent` is a specialized agent that leverages LLMs for decision-making and text generation. It uses the `LLMConfig` class to configure the LLM provider and model.
+
+```python
+from robotape.agents.llm import LLMAwareAgent
+from robotape.llm import LLMConfig
+
+# Configure the LLM
+llm_config = LLMConfig(
+    model="gpt-4",
+    api_key="your-api-key",
+    provider_name="openai"
+)
+
+# Create an LLM-aware agent
+agent = LLMAwareAgent("llm_agent", llm_config)
+```
+
+Key features:
+- **LLM Integration**: Supports multiple LLM providers (OpenAI, Anthropic, HuggingFace).
+- **Prompt Management**: Automatically generates prompts for the LLM based on the context.
+- **Usage Tracking**: Tracks token usage and other metrics from the LLM response.
+
+#### Example Usage
+
+```python
+# Example of using LLMAwareAgent
+async def run_llm_agent():
+    llm_config = LLMConfig(
+        model="gpt-4",
+        api_key="your-api-key",
+        provider_name="openai"
+    )
+    
+    agent = LLMAwareAgent("llm_agent", llm_config)
+    
+    # Generate a thought using the LLM
+    context = {"task": "Write a summary of the meeting"}
+    result = await agent.think(context)
+    
+    if result.success:
+        print(f"LLM Response: {result.output}")
+    else:
+        print(f"Error: {result.error}")
+
+# Run the agent
+import asyncio
+asyncio.run(run_llm_agent())
+```
+
+#### Supported LLM Providers
+
+The `LLMAwareAgent` supports the following LLM providers:
+
+- **OpenAI**: Use `provider_name="openai"` and specify the model (e.g., `gpt-4`).
+- **Anthropic**: Use `provider_name="anthropic"` and specify the model (e.g., `claude-3-sonnet-20240229`).
+- **HuggingFace**: Use `provider_name="huggingface"` and specify the model (e.g., `meta-llama/Llama-2-70b-chat-hf`).
+
+#### Customizing LLM Behavior
+
+You can customize the behavior of the LLM by passing additional parameters to the `LLMConfig`:
+
+```python
+llm_config = LLMConfig(
+    model="gpt-4",
+    api_key="your-api-key",
+    provider_name="openai",
+    temperature=0.5,  # Control creativity
+    max_tokens=100,   # Limit response length
+    additional_params={
+        "presence_penalty": 0.5  # Additional provider-specific parameters
+    }
+)
+```
+
 ## Creating Custom Agents
 
 ### Basic Custom Agent

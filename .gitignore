@@ -163,3 +163,4 @@ cython_debug/
 test.db
 codebase.md
 poetry.lock
+test_logs.log

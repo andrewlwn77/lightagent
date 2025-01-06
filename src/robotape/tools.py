@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel, TypeAdapter, ConfigDict, create_model
 from inspect import signature, Signature
 import inspect
+from .llm import BaseLLM
 from .utils.logging import get_logger, log_execution
 
 logger = get_logger(__name__)
@@ -162,3 +163,15 @@ class Tool(Generic[AgentDeps]):
             
             # Try again if we haven't exceeded max retries
             return await self.execute(args, context)
+
+class LLMTool(Tool):
+    """Tool for LLM text generation."""
+    
+    def __init__(self, llm: BaseLLM, max_retries: int = 3):
+        async def _generate(ctx: RunContext[str], prompt: str) -> str:
+            """Generate text using the LLM."""
+            response = await llm.generate(prompt)
+            return response.text
+        
+        super().__init__(_generate, max_retries=max_retries)
+        self.llm = llm
