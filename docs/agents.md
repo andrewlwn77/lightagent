@@ -130,9 +130,90 @@ llm_config = LLMConfig(
 )
 ```
 
-## Creating Custom Agents
+---
 
-### Basic Custom Agent
+### MCPLLMAgent
+
+The `MCPLLMAgent` is a specialized agent that combines the capabilities of LLMs with the **Model Control Protocol (MCP)**. It allows agents to interact with external tools and services through an MCP server, enabling more complex workflows and integrations.
+
+#### Key Features:
+- **MCP Integration**: Connects to an MCP server to execute tools and services.
+- **Tool Management**: Provides a set of predefined tools (e.g., `get_data`, `process_data`) that can be extended.
+- **LLM + MCP Synergy**: Uses LLMs to generate thoughts and MCP to execute actions.
+
+#### Example Usage
+
+```python
+from robotape.agents.mcpllm import MCPLLMAgent
+from robotape.llm import LLMConfig
+
+# Configure the LLM
+llm_config = LLMConfig(
+    model="gpt-4",
+    api_key="your-api-key",
+    provider_name="openai"
+)
+
+# Configure the MCP server
+mcp_config = {
+    "command": "python",
+    "args": ["path/to/mcp_server.py"],
+    "env": {"ENV_VAR": "value"}
+}
+
+# Create an MCPLLMAgent
+agent = MCPLLMAgent("mcp_agent", llm_config, mcp_config)
+
+# Connect to the MCP server
+await agent.connect()
+
+# Execute a full think-act-observe cycle
+context = {"task": "Analyze test data"}
+thought_result = await agent.think(context)
+action_result = await agent.act(thought_result)
+observe_result = await agent.observe(action_result)
+```
+
+#### Available Tools
+
+The `MCPLLMAgent` comes with a set of predefined tools that can be extended:
+
+- **get_data**: Retrieves data from the system based on a query.
+- **process_data**: Processes data using predefined logic.
+
+You can extend the available tools by modifying the `available_tools` dictionary in the `MCPLLMAgent` class.
+
+#### Example of Extending Tools
+
+```python
+class CustomMCPLLMAgent(MCPLLMAgent):
+    def __init__(self, name: str, llm_config: LLMConfig, mcp_config: Dict[str, Any]):
+        super().__init__(name, llm_config, mcp_config)
+        
+        # Add a custom tool
+        self.available_tools["custom_tool"] = {
+            "description": "A custom tool for specific tasks",
+            "args": {"param1": "string", "param2": "int"}
+        }
+
+    async def act(self, thought: Step) -> StepResult:
+        # Override the act method to handle custom tools
+        if thought.content.get("tool_name") == "custom_tool":
+            # Implement custom tool logic
+            return StepResult(
+                success=True,
+                output={"result": "Custom tool executed successfully"}
+            )
+        else:
+            # Fall back to the default implementation
+            return await super().act(thought)
+```
+
+---
+
+### Creating Custom Agents
+
+#### Basic Custom Agent
 
 ```python
 from robotape.agents import BaseAgent
@@ -164,38 +245,9 @@ class MyCustomAgent(BaseAgent):
         )
 ```
 
-### Agent with Tools
+---
 
-```python
-from robotape.agents import BaseAgent
-from robotape.tools import Tool, RunContext
-
-class ToolEnabledAgent(BaseAgent):
-    def __init__(self, name: str):
-        super().__init__(name)
-        self.search_tool = Tool(self._search_function)
-    
-    async def _search_function(self, ctx: RunContext[str], query: str):
-        # Implement search logic
-        return {"results": [f"Result for {query}"]}
-    
-    async def act(self, thought):
-        # Use tool in action
-        context = RunContext(
-            deps="tool_deps",
-            usage=0,
-            prompt=thought.content,
-            tape=self.current_tape
-        )
-        
-        result = await self.search_tool.execute(
-            {"query": thought.content},
-            context
-        )
-        return StepResult(success=True, output=result)
-```
-
-## Error Handling
+### Error Handling
 
 Implement robust error handling in agents:
 
@@ -220,9 +272,11 @@ class RobustAgent(BaseAgent):
             )
 ```
 
-## Advanced Patterns
+---
 
-### Composable Agents
+### Advanced Patterns
+
+#### Composable Agents
 
 Create agents that can work together:
 
@@ -247,30 +301,9 @@ class ComposableAgent(BaseAgent):
         )
 ```
 
-### Stateful Agents
+---
 
-Maintain state across executions:
-
-```python
-class StatefulAgent(BaseAgent):
-    def __init__(self, name: str):
-        super().__init__(name)
-        self.state = {}
-    
-    async def think(self, context):
-        # Access previous state
-        previous_results = self.state.get("results", [])
-        
-        # Update state
-        self.state["last_context"] = context
-        
-        return StepResult(
-            success=True,
-            output=f"Processed {len(previous_results)} previous results"
-        )
-```
-
-## Best Practices
+### Best Practices
 
 1. **Agent Design**
    - Keep agents focused on specific tasks
@@ -308,53 +341,3 @@ class StatefulAgent(BaseAgent):
        result = await agent.act(thought_step)
        assert result.success
    ```
-
-## Performance Considerations
-
-1. **Async Operations**
-   - Use async/await consistently
-   - Avoid blocking operations
-   - Handle concurrent execution properly
-
-2. **Memory Management**
-   - Clean up large objects
-   - Limit state size
-   - Use proper data structures
-
-3. **Tool Optimization**
-   - Implement caching where appropriate
-   - Use connection pooling
-   - Handle rate limiting
-
-## Debugging Agents
-
-```python
-from robotape.utils.logging import setup_logging
-
-# Enable debug logging
-setup_logging(debug=True)
-
-class DebuggableAgent(BaseAgent):
-    async def think(self, context):
-        logger.debug(f"Thinking with context: {context}")
-        result = await super().think(context)
-        logger.debug(f"Thought result: {result}")
-        return result
-```
-
-## Security Considerations
-
-1. **Input Validation**
-   - Validate all inputs
-   - Sanitize data appropriately
-   - Handle sensitive information properly
-
-2. **Tool Security**
-   - Implement proper authentication
-   - Use secure connections
-   - Handle credentials safely
-
-3. **Access Control**
-   - Implement agent permissions
-   - Control tool access
-   - Audit agent actions

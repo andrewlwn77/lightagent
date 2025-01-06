@@ -74,6 +74,54 @@ There are three primary step types:
    )
    ```
 
+---
+
+## MCP Integration with Tapes
+
+The **Model Control Protocol (MCP)** allows agents to interact with external tools and services. When using the `MCPLLMAgent`, all MCP-related actions (e.g., tool executions) are recorded in the tape as **ACTION** steps.
+
+### Example: Recording MCP Tool Executions
+
+When the `MCPLLMAgent` executes a tool (e.g., `get_data` or `process_data`), the action is recorded in the tape as an **ACTION** step. Here's an example:
+
+```python
+from robotape.tape import Step, StepMetadata, StepType
+
+# Example of an MCP tool execution step
+mcp_action_step = Step(
+    type=StepType.ACTION,
+    content={
+        "tool": "get_data",
+        "parameters": {"query": "test query"},
+        "result": "Simulated execution of get_data with {'query': 'test query'}"
+    },
+    metadata=StepMetadata(
+        agent="mcp_agent",
+        node="mcp_tool_execution"
+    )
+)
+
+# Add the step to the tape
+tape.append(mcp_action_step)
+```
+
+### Querying MCP-Related Steps
+
+You can query the tape to retrieve all MCP-related steps:
+
+```python
+# Get all MCP-related actions
+mcp_steps = tape.get_steps_by_agent("mcp_agent")
+
+# Filter for specific tool executions
+get_data_steps = [
+    step for step in mcp_steps
+    if step.content.get("tool") == "get_data"
+]
+```
+
+---
+
 ## Working with Tapes
 
 ### Creating and Appending Steps
@@ -113,6 +161,8 @@ new_tape = tape.clone()  # Creates new tape with reference to parent
 print(new_tape.metadata.parent_id)  # Shows original tape's ID
 ```
 
+---
+
 ## Storage System
 
 The framework includes a built-in storage system:
@@ -140,6 +190,8 @@ results = store.search_tapes(
 )
 ```
 
+---
+
 ## Best Practices
 
 1. **Step Content**
@@ -161,6 +213,8 @@ results = store.search_tapes(
    - Branch for experimental paths
    - Maintain clear parent-child relationships
    - Document branch purposes
+
+---
 
 ## Advanced Usage
 
@@ -207,6 +261,8 @@ def analyze_tape(tape: Tape):
         "total_steps": len(tape.steps)
     }
 ```
+
+---
 
 ## Error Handling
 

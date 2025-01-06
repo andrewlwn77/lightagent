@@ -4,7 +4,6 @@
   <img src="https://raw.githubusercontent.com/andrewlwn77/robotape/refs/heads/main/docs/lightagent.jpg" alt="Lightweight Agent Framework Logo" width="400"/>
 </p>
 
-
 A minimalist, extensible framework for building autonomous agents with a focus on transparency and composability.
 
 ## Overview
@@ -16,6 +15,7 @@ Lightweight Agent Framework (LAF) provides a simple yet powerful foundation for 
 - Build complex workflows by composing multiple agents
 - Persist and analyze agent execution history
 - Extend functionality through a modular tool system
+- Integrate with external tools and services using the **Model Control Protocol (MCP)**
 
 ## Key Features
 
@@ -25,6 +25,7 @@ Lightweight Agent Framework (LAF) provides a simple yet powerful foundation for 
 - 💾 **Built-in Storage**: Persist agent history with built-in SQLite support (expandable to other backends)
 - 🔄 **Async Support**: Built with asyncio for efficient concurrent operations
 - 🧪 **Testing Ready**: Comprehensive testing utilities and fixtures included
+- 🤖 **MCP Integration**: Seamlessly integrate with external tools and services using the Model Control Protocol
 
 ## Quick Installation
 
@@ -37,6 +38,8 @@ For development installation:
 ```bash
 pip install robotape[dev]
 ```
+
+---
 
 ## Basic Usage
 
@@ -61,6 +64,47 @@ tape.append(Step(
 await agent.execute_step(tape.get_last_step())
 ```
 
+---
+
+## Using MCPLLMAgent
+
+The `MCPLLMAgent` is a specialized agent that combines the capabilities of LLMs with the **Model Control Protocol (MCP)**. It allows agents to interact with external tools and services through an MCP server, enabling more complex workflows and integrations.
+
+### Example: Using MCPLLMAgent
+
+```python
+from robotape.agents.mcpllm import MCPLLMAgent
+from robotape.llm import LLMConfig
+
+# Configure the LLM
+llm_config = LLMConfig(
+    model="gpt-4",
+    api_key="your-api-key",
+    provider_name="openai"
+)
+
+# Configure the MCP server
+mcp_config = {
+    "command": "python",
+    "args": ["path/to/mcp_server.py"],
+    "env": {"ENV_VAR": "value"}
+}
+
+# Create an MCPLLMAgent
+agent = MCPLLMAgent("mcp_agent", llm_config, mcp_config)
+
+# Connect to the MCP server
+await agent.connect()
+
+# Execute a full think-act-observe cycle
+context = {"task": "Analyze test data"}
+thought_result = await agent.think(context)
+action_result = await agent.act(thought_result)
+observe_result = await agent.observe(action_result)
+```
+
+---
+
 ## Advanced Features
 
 - **Custom Agents**: Extend `BaseAgent` to create specialized agents
@@ -68,6 +112,9 @@ await agent.execute_step(tape.get_last_step())
 - **Storage Backends**: Built-in SQLite support, extensible to other databases
 - **Tape Management**: Clone, branch, and analyze execution history
 - **Validation**: Built-in parameter validation and error handling
+- **MCP Integration**: Connect to external tools and services using the Model Control Protocol
+
+---
 
 ## Documentation
 
@@ -76,6 +123,8 @@ For detailed information, check out:
 - [Getting Started Guide](docs/getting_started.md)
 - [Tape System Documentation](docs/tape_system.md)
 - [Agent System Guide](docs/agents.md)
+
+---
 
 ## Development
 
@@ -93,6 +142,8 @@ Run tests:
 pytest tests/ --cov=robotape
 ```
 
+---
+
 ## Contributing
 
 1. Fork the repository
@@ -100,6 +151,8 @@ pytest tests/ --cov=robotape
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+---
 
 ## License
 

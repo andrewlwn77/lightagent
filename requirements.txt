@@ -8,7 +8,9 @@ aiohttp>=3.8.0           # Async HTTP client
 typing-extensions>=4.5.0  # Additional typing support
 uuid>=1.30               # UUID generation
 mirascope>=1.14.0        # Mirascope integration
-mirascope[anthropic]
+mirascope[anthropic]     # Mirascope Anthropic integration
+mirascope[mcp]           # Mirascope MCP integration
+mcp>=1.2.0               # MCP integration
 
 # LLM Provider Dependencies
 openai>=1.59.3           # OpenAI API
