@@ -17,6 +17,31 @@ Lightweight Agent Framework (LAF) provides a simple yet powerful foundation for 
 - Extend functionality through a modular tool system
 - Integrate with external tools and services using the **Model Control Protocol (MCP)**
 
+---
+
+## System Architecture
+
+The following diagram illustrates how the components of the Lightweight Agent Framework fit together:
+
+```mermaid
+graph TD
+    A[Agent] -->|Think| B[LLM]
+    A -->|Act| C[MCP Server]
+    A -->|Observe| D[Tape System]
+    B -->|Generate Thoughts| A
+    C -->|Execute Tools| A
+    D -->|Record Steps| A
+    D -->|Replay History| A
+```
+
+### Key Components:
+- **Agent**: The core entity that performs the think-act-observe cycle.
+- **LLM**: Large Language Model used by the agent to generate thoughts and reasoning.
+- **MCP Server**: External server that provides tools and services for the agent to execute actions.
+- **Tape System**: Records the agent's execution history for analysis, debugging, and replay.
+
+---
+
 ## Key Features
 
 - 🎯 **Simple Core Concepts**: Based on three fundamental operations - think, act, and observe
@@ -26,6 +51,8 @@ Lightweight Agent Framework (LAF) provides a simple yet powerful foundation for 
 - 🔄 **Async Support**: Built with asyncio for efficient concurrent operations
 - 🧪 **Testing Ready**: Comprehensive testing utilities and fixtures included
 - 🤖 **MCP Integration**: Seamlessly integrate with external tools and services using the Model Control Protocol
+
+---
 
 ## Quick Installation
 
