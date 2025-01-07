@@ -1,38 +1,53 @@
-# Getting Started with Lightweight Agent Framework
+# Getting Started with the Lightweight Agent Framework
 
-This guide will help you get up and running with the Lightweight Agent Framework (LAF).
+Welcome to the **Lightweight Agent Framework (LAF)**! This guide will help you get started with building autonomous agents that can think, act, and observe within a structured environment. Whether you're building simple agents or complex workflows, LAF provides the tools you need to create, manage, and extend agents with ease.
 
-## Installation
+---
 
-### Basic Installation
+## **Installation**
 
-For basic usage, install using pip:
+### **Basic Installation**
+
+To install the Lightweight Agent Framework, use `pip`:
 
 ```bash
 pip install robotape
 ```
 
-### Development Installation
+This will install the core framework and its dependencies.
 
-For development or to access additional tools:
+---
+
+### **Development Installation**
+
+If you're planning to contribute to the framework or need additional development tools (e.g., testing utilities), install the `dev` extras:
 
 ```bash
 pip install robotape[dev]
 ```
 
-## Core Concepts
+---
 
-Before diving into code, let's understand the key concepts:
+## **Core Concepts**
 
-1. **Agents**: Autonomous entities that can think, act, and observe
-2. **Tapes**: Record of an agent's execution history
-3. **Steps**: Individual actions or thoughts within a tape
-4. **Tools**: Reusable functions that agents can utilize
-5. **MCP (Model Control Protocol)**: A protocol for integrating external tools and services via an MCP server
+Before diving into code, let's understand the key concepts of the framework:
 
-## Your First Agent
+1. **Agents**: Autonomous entities that can think, act, and observe.
+2. **Tapes**: A record of an agent's execution history, consisting of steps.
+3. **Steps**: Individual actions or thoughts within a tape (e.g., THOUGHT, ACTION, OBSERVATION).
+4. **Tools**: Reusable functions that agents can use to extend their capabilities.
+5. **LLM Integration**: Built-in support for Large Language Models (LLMs) like OpenAI, Anthropic, and HuggingFace.
 
-Let's create a simple agent that processes some text:
+---
+
+## **Quickstart Example**
+
+Let’s create a simple agent that processes some text. This example will demonstrate how to:
+- Create an agent.
+- Record its actions using a tape.
+- Execute the agent asynchronously.
+
+### **Step 1: Create an Agent**
 
 ```python
 from robotape.agents import SimpleAgent
@@ -40,11 +55,19 @@ from robotape.tape import Tape, Step, StepMetadata, StepType
 
 # Create an agent
 agent = SimpleAgent("text_processor")
+```
 
+### **Step 2: Create a Tape**
+
+```python
 # Create a tape to record the agent's actions
 tape = Tape()
+```
 
-# Add an initial thought
+### **Step 3: Add an Initial Thought**
+
+```python
+# Add an initial thought step
 initial_thought = Step(
     type=StepType.THOUGHT,
     content="I should process the input text",
@@ -54,7 +77,11 @@ initial_thought = Step(
     )
 )
 tape.append(initial_thought)
+```
 
+### **Step 4: Execute the Agent**
+
+```python
 # Execute the agent asynchronously
 async def process_text():
     result = await agent.execute_step(tape.get_last_step())
@@ -67,228 +94,67 @@ asyncio.run(process_text())
 
 ---
 
-## Using MCPLLMAgent
+### **Expected Output**
 
-The `MCPLLMAgent` is a specialized agent that combines the capabilities of LLMs with the **Model Control Protocol (MCP)**. It allows agents to interact with external tools and services through an MCP server, enabling more complex workflows and integrations.
+When you run the above code, the agent will process the initial thought and produce an output. The result will be printed to the console:
 
-### Setting Up the MCP Server
-
-Before using the `MCPLLMAgent`, you need to set up an MCP server. The server should expose tools that the agent can use, such as `get_data` and `process_data`.
-
-Here’s an example of a simple MCP server:
-
-```python
-# test_server.py
-from mirascope.mcp import MCPServer
-
-app = MCPServer("test-server")
-
-@app.tool()
-async def get_data(query: str) -> dict:
-    """Get test data based on query."""
-    return {
-        "result": f"Test result for {query}",
-        "timestamp": "2024-01-05T12:00:00Z"
-    }
-
-@app.tool()
-async def process_data(data: dict) -> dict:
-    """Process provided data."""
-    return {
-        "processed": data,
-        "status": "success"
-    }
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(app.run())
 ```
-
-Run the server using:
-
-```bash
-python test_server.py
-```
-
-### Using MCPLLMAgent
-
-Once the MCP server is running, you can create and use the `MCPLLMAgent`:
-
-```python
-from robotape.agents.mcpllm import MCPLLMAgent
-from robotape.llm import LLMConfig
-
-# Configure the LLM
-llm_config = LLMConfig(
-    model="gpt-4",
-    api_key="your-api-key",
-    provider_name="openai"
-)
-
-# Configure the MCP server
-mcp_config = {
-    "command": "python",
-    "args": ["path/to/test_server.py"],
-    "env": {"ENV_VAR": "value"}
-}
-
-# Create an MCPLLMAgent
-agent = MCPLLMAgent("mcp_agent", llm_config, mcp_config)
-
-# Connect to the MCP server
-await agent.connect()
-
-# Execute a full think-act-observe cycle
-context = {"task": "Analyze test data"}
-thought_result = await agent.think(context)
-action_result = await agent.act(thought_result)
-observe_result = await agent.observe(action_result)
-```
-
-### Available Tools
-
-The `MCPLLMAgent` comes with a set of predefined tools that can be extended:
-
-- **get_data**: Retrieves data from the system based on a query.
-- **process_data**: Processes data using predefined logic.
-
-You can extend the available tools by modifying the `available_tools` dictionary in the `MCPLLMAgent` class.
-
----
-
-## Creating Custom Agents
-
-Extend the `BaseAgent` class to create your own agent:
-
-```python
-from robotape.agents import BaseAgent
-from robotape.models.steps import StepResult
-
-class MyCustomAgent(BaseAgent):
-    async def think(self, context):
-        # Implement thinking logic
-        return StepResult(
-            success=True,
-            output="I have thought about it"
-        )
-    
-    async def act(self, thought):
-        # Implement action logic
-        return StepResult(
-            success=True,
-            output={"action": "completed"}
-        )
-    
-    async def observe(self, action):
-        # Implement observation logic
-        return StepResult(
-            success=True,
-            output="I observed the results"
-        )
+Agent result: I should process the input text
 ```
 
 ---
 
-## Using Tools
+## **Next Steps**
 
-Tools extend an agent's capabilities:
+Now that you’ve created your first agent, here are some next steps to explore:
 
-```python
-from robotape.tools import Tool, RunContext
+1. **Explore Built-in Agents**:
+   - Learn about `SimpleAgent` and `LLMAwareAgent`.
+   - Experiment with extending these agents to add custom behavior.
 
-# Define a tool function
-async def search_tool(ctx: RunContext[str], query: str):
-    # Implement search logic
-    return {"results": [f"Result for {query}"]}
+2. **Work with Tapes**:
+   - Learn how to record, replay, and analyze agent execution history using tapes.
 
-# Create and use the tool
-tool = Tool(search_tool, max_retries=3)
+3. **Integrate Tools**:
+   - Extend your agent’s capabilities by adding tools.
 
-# Use in an agent
-context = RunContext(
-    deps="search_dependencies",
-    usage=0,
-    prompt="search query",
-    tape=Tape()
-)
-
-result = await tool.execute(
-    {"query": "python programming"},
-    context
-)
-```
+4. **Use LLMs**:
+   - Explore how to integrate Large Language Models (LLMs) into your agents.
 
 ---
 
-## Working with Tapes
+## **Common Issues and Solutions**
 
-Tapes record agent execution history:
+1. **Async/Await Usage**:
+   - Always use `async/await` with agent methods.
+   - Run async code in an event loop (e.g., `asyncio.run()`).
 
-```python
-from robotape.tape import Tape
+2. **Tool Development**:
+   - Validate input parameters in tools.
+   - Handle errors gracefully and use retry mechanisms for unreliable operations.
 
-# Create a tape
-tape = Tape()
-
-# Add steps
-tape.append(Step(
-    type=StepType.THOUGHT,
-    content="Initial thought",
-    metadata=StepMetadata(agent="my_agent", node="planning")
-))
-
-# Get steps by type
-thoughts = tape.get_steps_by_type(StepType.THOUGHT)
-
-# Clone a tape for branching
-new_tape = tape.clone()
-```
+3. **Storage Management**:
+   - Regularly clean up old tapes to avoid storage bloat.
+   - Use tags to organize tapes for better management.
 
 ---
 
-## Storing Execution History
+## **Available Documentation**
 
-Use the built-in storage system:
+The framework provides comprehensive documentation covering various aspects:
 
-```python
-from robotape.storage import TapeStore
+1. **[API Reference](api_reference.md)**: Complete reference of all public APIs, classes, and methods.
 
-# Initialize storage
-store = TapeStore("sqlite:///agents.db")
+2. **[Advanced Patterns](advanced_patterns.md)**: Learn about advanced usage patterns and best practices.
 
-# Save a tape
-tape_id = store.save_tape(tape)
+3. **[Agent System](agents.md)**: Detailed guide on creating and managing different types of agents.
 
-# Load a tape
-loaded_tape = store.load_tape(tape_id)
+4. **[LLM Integration](llm_integration.md)**: Guide on integrating and using Large Language Models.
 
-# Search tapes
-results = store.search_tapes(agent="my_agent")
-```
+5. **[MCP (Master Control Program)](mcp.md)**: Understanding the Master Control Program component.
 
----
+6. **[MCP Tools](mcp_tools.md)**: Tools and utilities available in the MCP system.
 
-## Next Steps
+7. **[Tape System](tape_system.md)**: Deep dive into the tape system for recording and analyzing agent execution.
 
-- Explore the [Tape System](tape_system.md) documentation for advanced tape operations
-- Learn about different agent types in the [Agents](agents.md) guide
-- Check out example implementations in the `examples` directory
-- Review the test suite for more usage patterns
-
----
-
-## Common Issues and Solutions
-
-1. **Async/Await Usage**
-   - Always use `async/await` with agent methods
-   - Run async code in an event loop
-
-2. **Tool Development**
-   - Always validate input parameters
-   - Handle errors gracefully
-   - Use retry mechanisms for unreliable operations
-
-3. **Storage Management**
-   - Regularly clean up old tapes
-   - Use tags for better organization
-   - Consider implementing tape archival for long-term storage
+8. **[Tools](tools.md)**: Comprehensive guide on using and creating tools for agents.

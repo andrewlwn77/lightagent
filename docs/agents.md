@@ -1,62 +1,96 @@
-# Agents Documentation
+# Agent System
 
-This guide covers the agent system in the Lightweight Agent Framework, including agent types, implementation patterns, and best practices.
+The **Agent System** is the core of the Lightweight Agent Framework. Agents are autonomous entities that follow a **think-act-observe** cycle, enabling them to perform tasks, make decisions, and learn from their actions. This section covers the following topics:
 
-## Agent Architecture
+1. **BaseAgent**: The foundation of all agents.
+2. **Built-in Agents**: `SimpleAgent` and `LLMAwareAgent`.
+3. **Custom Agents**: How to extend `BaseAgent` and built-in agents.
+4. **Composable and Stateful Agents**: Advanced patterns for building complex agents.
 
-Agents in the framework follow a three-phase execution cycle:
+---
 
-1. **Think**: Generate plans and decisions
-2. **Act**: Execute actions based on thoughts
-3. **Observe**: Process and analyze results
+## **BaseAgent**
 
-## Base Agent
+All agents in the framework inherit from the `BaseAgent` class. This class defines the core lifecycle of an agent:
 
-All agents inherit from the `BaseAgent` class:
+1. **Think**: Generate plans and decisions.
+2. **Act**: Execute actions based on thoughts.
+3. **Observe**: Process and analyze results.
+
+Here’s the basic structure of `BaseAgent`:
 
 ```python
-from robotape.agents import BaseAgent
-from robotape.models.steps import StepResult
+from abc import ABC, abstractmethod
+from typing import Dict, Any
+from robotape.models.steps import StepResult, Step
 
 class BaseAgent(ABC):
+    @abstractmethod
     async def think(self, context: Dict[str, Any]) -> StepResult:
         """Generate a thought step."""
         pass
 
+    @abstractmethod
     async def act(self, thought: Step) -> StepResult:
         """Generate an action based on a thought."""
         pass
 
+    @abstractmethod
     async def observe(self, action: Step) -> StepResult:
         """Process an observation after an action."""
         pass
 ```
 
-## Built-in Agents
+---
 
-### SimpleAgent
+## **Built-in Agents**
 
-The framework includes a `SimpleAgent` implementation:
+The framework provides two built-in agents:
+
+1. **SimpleAgent**: A basic agent with a straightforward think-act-observe cycle.
+2. **LLMAwareAgent**: An agent that integrates with Large Language Models (LLMs) for advanced decision-making.
+
+---
+
+### **SimpleAgent**
+
+The `SimpleAgent` is a basic implementation of `BaseAgent`. It provides a simple think-act-observe cycle and is ideal for straightforward tasks.
+
+#### **Example Usage**
 
 ```python
 from robotape.agents import SimpleAgent
+from robotape.tape import Tape, Step, StepMetadata, StepType
 
+# Create a SimpleAgent
 agent = SimpleAgent("my_agent")
+
+# Create a tape and add a thought step
+tape = Tape()
+thought_step = Step(
+    type=StepType.THOUGHT,
+    content="I should process the input data",
+    metadata=StepMetadata(agent="my_agent", node="planning")
+)
+tape.append(thought_step)
+
+# Execute the agent
+async def run_agent():
+    result = await agent.execute_step(tape.get_last_step())
+    print(f"Agent result: {result.output}")
+
+# Run the agent
+import asyncio
+asyncio.run(run_agent())
 ```
 
-Key features:
-- Basic think-act-observe cycle
-- Error handling
-- Tape integration
-- Tool support
+---
 
-### LLM-Aware Agents
+### **LLMAwareAgent**
 
-The framework provides built-in support for LLM (Large Language Model) agents, which can interact with various LLM providers such as OpenAI, Anthropic, and HuggingFace. These agents are designed to integrate seamlessly with the LLM capabilities provided by the framework.
+The `LLMAwareAgent` extends `BaseAgent` to integrate with LLMs. It uses the `LLMConfig` class to configure the LLM provider and model.
 
-#### LLMAwareAgent
-
-The `LLMAwareAgent` is a specialized agent that leverages LLMs for decision-making and text generation. It uses the `LLMConfig` class to configure the LLM provider and model.
+#### **Example Usage**
 
 ```python
 from robotape.agents.llm import LLMAwareAgent
@@ -69,232 +103,156 @@ llm_config = LLMConfig(
     provider_name="openai"
 )
 
-# Create an LLM-aware agent
+# Create an LLMAwareAgent
 agent = LLMAwareAgent("llm_agent", llm_config)
-```
 
-Key features:
-- **LLM Integration**: Supports multiple LLM providers (OpenAI, Anthropic, HuggingFace).
-- **Prompt Management**: Automatically generates prompts for the LLM based on the context.
-- **Usage Tracking**: Tracks token usage and other metrics from the LLM response.
-
-#### Example Usage
-
-```python
-# Example of using LLMAwareAgent
+# Execute the agent
 async def run_llm_agent():
-    llm_config = LLMConfig(
-        model="gpt-4",
-        api_key="your-api-key",
-        provider_name="openai"
-    )
-    
-    agent = LLMAwareAgent("llm_agent", llm_config)
-    
-    # Generate a thought using the LLM
     context = {"task": "Write a summary of the meeting"}
     result = await agent.think(context)
-    
-    if result.success:
-        print(f"LLM Response: {result.output}")
-    else:
-        print(f"Error: {result.error}")
+    print(f"LLM Response: {result.output}")
 
 # Run the agent
 import asyncio
 asyncio.run(run_llm_agent())
 ```
 
-#### Supported LLM Providers
+---
 
-The `LLMAwareAgent` supports the following LLM providers:
+## **Custom Agents**
 
-- **OpenAI**: Use `provider_name="openai"` and specify the model (e.g., `gpt-4`).
-- **Anthropic**: Use `provider_name="anthropic"` and specify the model (e.g., `claude-3-sonnet-20240229`).
-- **HuggingFace**: Use `provider_name="huggingface"` and specify the model (e.g., `meta-llama/Llama-2-70b-chat-hf`).
-
-#### Customizing LLM Behavior
-
-You can customize the behavior of the LLM by passing additional parameters to the `LLMConfig`:
-
-```python
-llm_config = LLMConfig(
-    model="gpt-4",
-    api_key="your-api-key",
-    provider_name="openai",
-    temperature=0.5,  # Control creativity
-    max_tokens=100,   # Limit response length
-    additional_params={
-        "presence_penalty": 0.5  # Additional provider-specific parameters
-    }
-)
-```
+You can extend **any of the provided agents** (`BaseAgent`, `SimpleAgent`, or `LLMAwareAgent`) to create custom agents tailored to your needs.
 
 ---
 
-### MCPLLMAgent
+### **Extending BaseAgent**
 
-The `MCPLLMAgent` is a specialized agent that combines the capabilities of LLMs with the **Model Control Protocol (MCP)**. It allows agents to interact with external tools and services through an MCP server, enabling more complex workflows and integrations.
+When extending `BaseAgent`, you define your own `think`, `act`, and `observe` methods.
 
-#### Key Features:
-- **MCP Integration**: Connects to an MCP server to execute tools and services.
-- **Tool Management**: Provides a set of predefined tools (e.g., `get_data`, `process_data`) that can be extended.
-- **LLM + MCP Synergy**: Uses LLMs to generate thoughts and MCP to execute actions.
-
-#### Example Usage
+#### **Example**
 
 ```python
-from robotape.agents.mcpllm import MCPLLMAgent
-from robotape.llm import LLMConfig
-
-# Configure the LLM
-llm_config = LLMConfig(
-    model="gpt-4",
-    api_key="your-api-key",
-    provider_name="openai"
-)
-
-# Configure the MCP server
-mcp_config = {
-    "command": "python",
-    "args": ["path/to/mcp_server.py"],
-    "env": {"ENV_VAR": "value"}
-}
-
-# Create an MCPLLMAgent
-agent = MCPLLMAgent("mcp_agent", llm_config, mcp_config)
-
-# Connect to the MCP server
-await agent.connect()
-
-# Execute a full think-act-observe cycle
-context = {"task": "Analyze test data"}
-thought_result = await agent.think(context)
-action_result = await agent.act(thought_result)
-observe_result = await agent.observe(action_result)
-```
-
-#### Available Tools
-
-The `MCPLLMAgent` comes with a set of predefined tools that can be extended:
-
-- **get_data**: Retrieves data from the system based on a query.
-- **process_data**: Processes data using predefined logic.
-
-You can extend the available tools by modifying the `available_tools` dictionary in the `MCPLLMAgent` class.
-
-#### Example of Extending Tools
-
-```python
-class CustomMCPLLMAgent(MCPLLMAgent):
-    def __init__(self, name: str, llm_config: LLMConfig, mcp_config: Dict[str, Any]):
-        super().__init__(name, llm_config, mcp_config)
-        
-        # Add a custom tool
-        self.available_tools["custom_tool"] = {
-            "description": "A custom tool for specific tasks",
-            "args": {"param1": "string", "param2": "int"}
-        }
-
-    async def act(self, thought: Step) -> StepResult:
-        # Override the act method to handle custom tools
-        if thought.content.get("tool_name") == "custom_tool":
-            # Implement custom tool logic
-            return StepResult(
-                success=True,
-                output={"result": "Custom tool executed successfully"}
-            )
-        else:
-            # Fall back to the default implementation
-            return await super().act(thought)
-```
-
----
-
-### Creating Custom Agents
-
-#### Basic Custom Agent
-
-```python
+from typing import Dict, Any
 from robotape.agents import BaseAgent
-from robotape.models.steps import StepResult
+from robotape.models.steps import StepResult, Step
 
 class MyCustomAgent(BaseAgent):
-    async def think(self, context):
-        # Analyze context and plan next action
+    async def think(self, context: Dict[str, Any]) -> StepResult:
+        """Custom thinking logic."""
         return StepResult(
             success=True,
-            output="I should process the data",
+            output="I have thought about it",
             metadata={"context_keys": list(context.keys())}
         )
     
-    async def act(self, thought):
-        # Execute planned action
+    async def act(self, thought: Step) -> StepResult:
+        """Custom action logic."""
         return StepResult(
             success=True,
             output={"action": "process", "data": thought.content},
             metadata={"thought_id": thought.metadata.id}
         )
     
-    async def observe(self, action):
-        # Analyze action results
+    async def observe(self, action: Step) -> StepResult:
+        """Custom observation logic."""
         return StepResult(
             success=True,
-            output="Action completed successfully",
+            output="I observed the results",
             metadata={"action_id": action.metadata.id}
         )
 ```
 
 ---
 
-### Error Handling
+### **Extending SimpleAgent**
 
-Implement robust error handling in agents:
+When extending `SimpleAgent`, you can add custom logic while retaining the simplicity of the think-act-observe cycle.
+
+#### **Example**
 
 ```python
-class RobustAgent(BaseAgent):
-    async def execute_step(self, step: Step) -> StepResult:
-        try:
-            # Normal execution
-            return await super().execute_step(step)
-        except Exception as e:
-            # Log error
-            logger.error(f"Error executing step: {str(e)}")
-            
-            # Create error result
-            return StepResult(
-                success=False,
-                error=str(e),
-                metadata={
-                    "error_type": type(e).__name__,
-                    "step_type": step.type
-                }
-            )
+from typing import Dict, Any
+from robotape.agents import SimpleAgent
+from robotape.models.steps import StepResult, Step
+
+class EnhancedSimpleAgent(SimpleAgent):
+    async def think(self, context: Dict[str, Any]) -> StepResult:
+        """Add custom logic before or after the default thinking behavior."""
+        print("Custom thinking logic")
+        result = await super().think(context)
+        return StepResult(
+            success=result.success,
+            output=f"Enhanced: {result.output}",
+            metadata=result.metadata
+        )
+    
+    async def act(self, thought: Step) -> StepResult:
+        """Add custom logic before or after the default action behavior."""
+        print("Custom action logic")
+        result = await super().act(thought)
+        return StepResult(
+            success=result.success,
+            output=f"Enhanced: {result.output}",
+            metadata=result.metadata
+        )
 ```
 
 ---
 
-### Advanced Patterns
+### **Extending LLMAwareAgent**
 
-#### Composable Agents
+When extending `LLMAwareAgent`, you can customize LLM behavior or add additional functionality.
 
-Create agents that can work together:
+#### **Example**
 
 ```python
+from typing import Dict, Any
+from robotape.agents.llm import LLMAwareAgent
+from robotape.models.steps import StepResult
+
+class CustomPromptLLMAgent(LLMAwareAgent):
+    def _create_thinking_prompt(self, context: Dict[str, Any]) -> str:
+        """Override the default prompt creation logic."""
+        return f"Custom prompt based on context: {context}"
+    
+    async def think(self, context: Dict[str, Any]) -> StepResult:
+        """Use the custom prompt logic."""
+        result = await super().think(context)
+        return StepResult(
+            success=result.success,
+            output=f"Custom Prompt Result: {result.output}",
+            metadata=result.metadata
+        )
+```
+
+---
+
+## **Composable and Stateful Agents**
+
+### **Composable Agents**
+
+Composable agents allow you to combine multiple agents into a single workflow. This is useful for complex tasks that require collaboration between agents.
+
+#### **Example**
+
+```python
+from typing import List
+from robotape.agents import BaseAgent
+from robotape.models.steps import StepResult
+
 class ComposableAgent(BaseAgent):
     def __init__(self, name: str, sub_agents: List[BaseAgent]):
         super().__init__(name)
         self.sub_agents = sub_agents
     
-    async def think(self, context):
-        # Collect thoughts from all sub-agents
+    async def think(self, context: Dict[str, Any]) -> StepResult:
+        """Collect thoughts from all sub-agents."""
         thoughts = []
         for agent in self.sub_agents:
             result = await agent.think(context)
             if result.success:
                 thoughts.append(result.output)
         
-        # Combine thoughts
         return StepResult(
             success=True,
             output={"combined_thoughts": thoughts}
@@ -303,41 +261,37 @@ class ComposableAgent(BaseAgent):
 
 ---
 
-### Best Practices
+### **Stateful Agents**
 
-1. **Agent Design**
-   - Keep agents focused on specific tasks
-   - Implement proper error handling
-   - Use meaningful metadata
-   - Document agent behavior
+Stateful agents maintain state across executions, allowing them to remember previous actions and results.
 
-2. **State Management**
-   - Use clear state interfaces
-   - Handle state persistence
-   - Clean up state when appropriate
+#### **Example**
 
-3. **Tool Integration**
-   - Validate tool inputs
-   - Handle tool errors gracefully
-   - Record tool usage in tape
+```python
+from robotape.agents import BaseAgent
+from robotape.models.steps import StepResult
 
-4. **Testing**
-   ```python
-   import pytest
-   
-   async def test_custom_agent():
-       agent = MyCustomAgent("test_agent")
-       
-       # Test thinking
-       result = await agent.think({"test": "data"})
-       assert result.success
-       
-       # Test action
-       thought_step = Step(
-           type=StepType.THOUGHT,
-           content="test thought",
-           metadata=StepMetadata(agent="test", node="test")
-       )
-       result = await agent.act(thought_step)
-       assert result.success
-   ```
+class StatefulAgent(BaseAgent):
+    def __init__(self, name: str):
+        super().__init__(name)
+        self.state = {}
+    
+    async def think(self, context: Dict[str, Any]) -> StepResult:
+        """Access and update state."""
+        previous_results = self.state.get("results", [])
+        self.state["last_context"] = context
+        
+        return StepResult(
+            success=True,
+            output=f"Processed {len(previous_results)} previous results"
+        )
+```
+
+---
+
+## **Next Steps**
+
+Now that you’ve learned about the **Agent System**, here are some next steps:
+- Explore **LLM Integration** to add advanced decision-making capabilities to your agents.
+- Learn about the **Tool System** to extend your agents with reusable functions.
+- Dive into the **Tape System** to record and analyze agent execution history.

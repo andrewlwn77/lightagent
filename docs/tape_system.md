@@ -1,53 +1,61 @@
-# Tape System Documentation
+# Tape System
 
-The tape system is a core component of the Lightweight Agent Framework, providing a mechanism to record, analyze, and replay agent operations.
+The **Tape System** is a powerful mechanism for recording and analyzing agent execution history. A **tape** is a sequential record of **steps** that captures an agent's thoughts, actions, and observations. This section covers:
 
-## Overview
+1. **Tape**: The primary container for steps.
+2. **Steps**: Individual records within a tape (e.g., THOUGHT, ACTION, OBSERVATION).
+3. **Step Types**: The different types of steps and their purposes.
+4. **Working with Tapes**: Creating, querying, and branching tapes.
+5. **Storage and Persistence**: Saving and loading tapes using `TapeStore`.
 
-A tape is a sequential record of steps that captures an agent's:
-- Thoughts (planning and reasoning)
-- Actions (operations and tool usage)
-- Observations (results and feedback)
+---
 
-## Core Components
+## **Tape**
 
-### Tape
+The `Tape` class is the primary container for steps. It provides methods for appending, querying, and managing steps.
 
-The `Tape` class is the primary container for steps:
-
-```python
-from robotape.tape import Tape, TapeMetadata
-
-tape = Tape(
-    metadata=TapeMetadata(
-        author="my_agent",
-        parent_id=None  # Set for branched tapes
-    )
-)
-```
-
-### Steps
-
-Steps are individual records within a tape:
+### **Example**
 
 ```python
-from robotape.tape import Step, StepMetadata, StepType
+from robotape.tape import Tape, Step, StepMetadata, StepType
 
-step = Step(
+# Create a new tape
+tape = Tape()
+
+# Add steps
+tape.append(Step(
     type=StepType.THOUGHT,
-    content="I should process this data",
-    metadata=StepMetadata(
-        agent="my_agent",
-        node="planning"
-    )
-)
+    content="I should search for information",
+    metadata=StepMetadata(agent="my_agent", node="planning")
+))
+
+tape.append(Step(
+    type=StepType.ACTION,
+    content={"tool": "search", "query": "python"},
+    metadata=StepMetadata(agent="my_agent", node="executor")
+))
+
+tape.append(Step(
+    type=StepType.OBSERVATION,
+    content={"results": ["result1", "result2"]},
+    metadata=StepMetadata(agent="my_agent", node="observer")
+))
 ```
 
-### Step Types
+---
+
+## **Steps**
+
+Steps are individual records within a tape. Each step has:
+- A **type** (e.g., THOUGHT, ACTION, OBSERVATION).
+- **Content**: The data associated with the step.
+- **Metadata**: Additional information about the step (e.g., agent, node).
+
+### **Step Types**
 
 There are three primary step types:
 
-1. **THOUGHT**: Planning and reasoning steps
+1. **THOUGHT**: Planning and reasoning steps.
    ```python
    thought_step = Step(
        type=StepType.THOUGHT,
@@ -56,7 +64,7 @@ There are three primary step types:
    )
    ```
 
-2. **ACTION**: Execution and tool usage steps
+2. **ACTION**: Execution and tool usage steps.
    ```python
    action_step = Step(
        type=StepType.ACTION,
@@ -65,7 +73,7 @@ There are three primary step types:
    )
    ```
 
-3. **OBSERVATION**: Results and feedback steps
+3. **OBSERVATION**: Results and feedback steps.
    ```python
    observation_step = Step(
        type=StepType.OBSERVATION,
@@ -76,55 +84,9 @@ There are three primary step types:
 
 ---
 
-## MCP Integration with Tapes
+## **Working with Tapes**
 
-The **Model Control Protocol (MCP)** allows agents to interact with external tools and services. When using the `MCPLLMAgent`, all MCP-related actions (e.g., tool executions) are recorded in the tape as **ACTION** steps.
-
-### Example: Recording MCP Tool Executions
-
-When the `MCPLLMAgent` executes a tool (e.g., `get_data` or `process_data`), the action is recorded in the tape as an **ACTION** step. Here's an example:
-
-```python
-from robotape.tape import Step, StepMetadata, StepType
-
-# Example of an MCP tool execution step
-mcp_action_step = Step(
-    type=StepType.ACTION,
-    content={
-        "tool": "get_data",
-        "parameters": {"query": "test query"},
-        "result": "Simulated execution of get_data with {'query': 'test query'}"
-    },
-    metadata=StepMetadata(
-        agent="mcp_agent",
-        node="mcp_tool_execution"
-    )
-)
-
-# Add the step to the tape
-tape.append(mcp_action_step)
-```
-
-### Querying MCP-Related Steps
-
-You can query the tape to retrieve all MCP-related steps:
-
-```python
-# Get all MCP-related actions
-mcp_steps = tape.get_steps_by_agent("mcp_agent")
-
-# Filter for specific tool executions
-get_data_steps = [
-    step for step in mcp_steps
-    if step.content.get("tool") == "get_data"
-]
-```
-
----
-
-## Working with Tapes
-
-### Creating and Appending Steps
+### **Creating and Appending Steps**
 
 ```python
 # Create a new tape
@@ -136,7 +98,7 @@ tape.append(action_step)
 tape.append(observation_step)
 ```
 
-### Querying Steps
+### **Querying Steps**
 
 ```python
 # Get all thoughts
@@ -149,13 +111,13 @@ agent_steps = tape.get_steps_by_agent("my_agent")
 last_step = tape.get_last_step()
 ```
 
-### Branching and Cloning
+### **Branching and Cloning**
 
-Create new tapes from existing ones:
+You can create new tapes from existing ones, preserving the parent-child relationship.
 
 ```python
 # Clone a tape
-new_tape = tape.clone()  # Creates new tape with reference to parent
+new_tape = tape.clone()
 
 # Verify lineage
 print(new_tape.metadata.parent_id)  # Shows original tape's ID
@@ -163,9 +125,11 @@ print(new_tape.metadata.parent_id)  # Shows original tape's ID
 
 ---
 
-## Storage System
+## **Storage and Persistence**
 
-The framework includes a built-in storage system:
+The framework includes a built-in storage system (`TapeStore`) for persisting tapes.
+
+### **Example**
 
 ```python
 from robotape.storage import TapeStore
@@ -192,35 +156,35 @@ results = store.search_tapes(
 
 ---
 
-## Best Practices
+## **Best Practices**
 
-1. **Step Content**
-   - Use structured data for step content
-   - Include relevant context in metadata
-   - Keep content serializable
+1. **Step Content**:
+   - Use structured data for step content.
+   - Include relevant context in metadata.
+   - Keep content serializable.
 
-2. **Tape Organization**
-   - Use meaningful agent and node names
-   - Add tags for categorization
-   - Maintain clear tape lineage
+2. **Tape Organization**:
+   - Use meaningful agent and node names.
+   - Add tags for categorization.
+   - Maintain clear tape lineage.
 
-3. **Storage Management**
-   - Implement retention policies
-   - Use tags for organization
-   - Clean up old tapes regularly
+3. **Storage Management**:
+   - Implement retention policies.
+   - Use tags for organization.
+   - Clean up old tapes regularly.
 
-4. **Branching Strategy**
-   - Branch for experimental paths
-   - Maintain clear parent-child relationships
-   - Document branch purposes
+4. **Branching Strategy**:
+   - Branch for experimental paths.
+   - Maintain clear parent-child relationships.
+   - Document branch purposes.
 
 ---
 
-## Advanced Usage
+## **Advanced Usage**
 
-### Custom Step Types
+### **Custom Step Types**
 
-Extend the system with custom step types:
+You can extend the system with custom step types.
 
 ```python
 from enum import Enum
@@ -238,12 +202,14 @@ analysis_step = Step(
 )
 ```
 
-### Tape Analysis
+### **Tape Analysis**
 
-Implement tape analysis utilities:
+You can implement utilities to analyze tape execution patterns.
 
 ```python
-def analyze_tape(tape: Tape):
+from datetime import datetime
+
+def analyze_tape(tape: Tape) -> Dict[str, Any]:
     """Analyze tape execution patterns."""
     step_counts = {}
     for step in tape.steps:
@@ -264,20 +230,9 @@ def analyze_tape(tape: Tape):
 
 ---
 
-## Error Handling
+## **Next Steps**
 
-Implement robust error handling:
-
-```python
-try:
-    # Attempt to add step
-    tape.append(step)
-except Exception as e:
-    # Create error step
-    error_step = Step(
-        type=StepType.ERROR,
-        content={"error": str(e)},
-        metadata=StepMetadata(agent="error_handler", node="error")
-    )
-    tape.append(error_step)
-```
+Now that you’ve learned about the **Tape System**, here are some next steps:
+- Explore **MCP (Multi-Component Processing)** for building complex workflows.
+- Learn about **Advanced Patterns** for error handling, concurrency, and performance optimization.
+- Dive into **Testing and Debugging** to ensure your agents and tapes work as expected.

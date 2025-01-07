@@ -44,13 +44,13 @@ graph TD
 
 ## Key Features
 
-- 🎯 **Simple Core Concepts**: Based on three fundamental operations - think, act, and observe
-- 📼 **Tape-Based History**: Record every step of your agent's execution for analysis and debugging
-- 🛠 **Modular Tools**: Easily extend agent capabilities through a flexible tool system
-- 💾 **Built-in Storage**: Persist agent history with built-in SQLite support (expandable to other backends)
-- 🔄 **Async Support**: Built with asyncio for efficient concurrent operations
-- 🧪 **Testing Ready**: Comprehensive testing utilities and fixtures included
-- 🤖 **MCP Integration**: Seamlessly integrate with external tools and services using the Model Control Protocol
+- **Simple Core Concepts**: Based on three fundamental operations - think, act, and observe
+- **Tape-Based History**: Record every step of your agent's execution for analysis and debugging
+- **Modular Tools**: Easily extend agent capabilities through a flexible tool system
+- **Built-in Storage**: Persist agent history with built-in SQLite support (expandable to other backends)
+- **Async Support**: Built with asyncio for efficient concurrent operations
+- **Testing Ready**: Comprehensive testing utilities and fixtures included
+- **MCP Integration**: Seamlessly integrate with external tools and services using the Model Control Protocol
 
 ---
 
@@ -145,11 +145,17 @@ observe_result = await agent.observe(action_result)
 
 ## Documentation
 
-For detailed information, check out:
+The framework provides comprehensive documentation covering all aspects:
 
-- [Getting Started Guide](docs/getting_started.md)
-- [Tape System Documentation](docs/tape_system.md)
-- [Agent System Guide](docs/agents.md)
+1. **[Getting Started Guide](docs/getting_started.md)**: Quick start guide and core concepts
+2. **[API Reference](docs/api_reference.md)**: Complete reference of all public APIs
+3. **[Advanced Patterns](docs/advanced_patterns.md)**: Advanced usage patterns and best practices
+4. **[Agent System](docs/agents.md)**: Guide to creating and managing agents
+5. **[LLM Integration](docs/llm_integration.md)**: Integrating Large Language Models
+6. **[MCP (Master Control Program)](docs/mcp.md)**: Understanding the MCP component
+7. **[MCP Tools](docs/mcp_tools.md)**: Available MCP tools and utilities
+8. **[Tape System](docs/tape_system.md)**: Recording and analyzing agent execution
+9. **[Tools](docs/tools.md)**: Using and creating agent tools
 
 ---
 
